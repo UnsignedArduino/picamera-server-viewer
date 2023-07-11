@@ -1,6 +1,6 @@
 # picamera-server
 
-The front-end to view and control your PiCamera on your Raspberry Pi, with support for the Waveshare Pan-tilt HAT!
+The frontend to view and control your PiCamera on your Raspberry Pi, with support for the Waveshare Pan-tilt HAT!
 
 ## Install
 
