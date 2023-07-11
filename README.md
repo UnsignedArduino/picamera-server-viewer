@@ -2,6 +2,9 @@
 
 The frontend to view and control your PiCamera on your Raspberry Pi, with support for the Waveshare Pan-tilt HAT!
 
+The backend can be found
+at [https://github.com/UnsignedArduino/picamera-server-api](https://github.com/UnsignedArduino/picamera-server-api).
+
 ## Install
 
 1. Have `nodejs` installed.
@@ -18,3 +21,5 @@ and type-check. (yarn run typecheck)
 ## Build and serve
 
 `yarn run build` and `yarn run start`.
+
+Note you must also follow the instructions to start the backend server. 
