@@ -1,22 +1,51 @@
 {
   "name": "picamera-server",
   "version": "0.1.0",
+  "description": "Front-end to view and control the PiCamera on a Raspberry Pi!",
+  "keywords": [
+    "front-end",
+    "raspberry-pi",
+    "picamera"
+  ],
+  "author": {
+    "name": "UnsignedArduino",
+    "email": "UnsignedArduino@outlook.com",
+    "url": "https://github.com/UnsignedArduino"
+  },
+  "contributors": [
+    {
+      "name": "UnsignedArduino",
+      "email": "UnsignedArduino@outlook.com",
+      "url": "https://github.com/UnsignedArduino"
+    }
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "writeLint": "next lint --fix",
+    "format": "yarn prettier --check .",
+    "writeFormat": "yarn prettier --write .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@types/node": "20.4.1",
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.6",
-    "eslint": "8.44.0",
-    "eslint-config-next": "13.4.9",
     "next": "13.4.9",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "5.1.6"
+  },
+  "devDependencies": {
+    "eslint": "8.23.1",
+    "eslint-config-next": "12.3.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-import-resolver-typescript": "^3.5.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "prettier": "3.0.0"
   }
 }
