@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import PiCameraControl from "@/components/PiCameraControl";
-import PiCameraStream from "@/components/PiCameraStream";
+import PiCameraUI from "@/components/PiCameraUI";
 
 export default function Home() {
   const [mount, setMount] = React.useState(false);
@@ -15,16 +14,5 @@ export default function Home() {
     };
   }, []);
 
-  return (
-    <main>
-      {mount ? (
-        <>
-          <PiCameraStream />
-          <PiCameraControl />
-        </>
-      ) : (
-        <></>
-      )}
-    </main>
-  );
+  return <main>{mount ? <PiCameraUI /> : <></>}</main>;
 }

@@ -46,17 +46,22 @@ function PiCameraSettingsNumber({
   );
 }
 
-export default function PiCameraControl(): JSX.Element {
-  const wsControlRef = React.useRef<WebSocket | null>();
+export default function PiCameraControl({
+  wsOnMsgEventCbRef,
+  wsSendRef,
+  hide = false,
+}: {
+  wsOnMsgEventCbRef: React.MutableRefObject<
+    ((_e: MessageEvent) => void) | undefined
+  >;
+  wsSendRef: React.MutableRefObject<((_d: string) => void) | undefined>;
+  hide: boolean;
+}): JSX.Element {
   const [settings, setSettings] = React.useState<object>({});
   const [performance, setPerformance] = React.useState<object>({});
 
   React.useEffect(() => {
-    const wsControl = new WebSocket(
-      `ws://${window.location.hostname}:4000/control`,
-    );
-
-    const wsControlOnMsgEvent = (e: MessageEvent) => {
+    wsOnMsgEventCbRef.current = (e: MessageEvent) => {
       const msg = JSON.parse(e.data);
       if (msg.type === "settings") {
         console.log("Received new settings");
@@ -65,38 +70,25 @@ export default function PiCameraControl(): JSX.Element {
         setPerformance(msg.performance);
       }
     };
-    const connectControl = () => {
-      wsControl.addEventListener("message", wsControlOnMsgEvent);
-      wsControlRef.current = wsControl;
-      console.log("Started websocket control due to mount");
-    };
-    const disconnectControl = () => {
-      wsControl.removeEventListener("message", wsControlOnMsgEvent);
-      wsControl.close();
-      wsControlRef.current = null;
-      console.log("Stopped websocket control due to unmount");
-    };
-
-    connectControl();
-
-    return disconnectControl;
   }, []);
 
-  return (
+  return hide ? (
+    <></>
+  ) : (
     <div>
-      {Object.keys(performance).map((key) => {
-        // @ts-ignore
-        const value = performance[key];
-        return (
-          <>
-            <label key={`${key}-${value}`}>
+      <p>{status}</p>
+      <p>
+        {Object.keys(performance).map((key) => {
+          // @ts-ignore
+          const value = performance[key];
+          return (
+            <>
               {key.replaceAll("_", " ")}: {value}
-            </label>
-            <br />
-          </>
-        );
-      })}
-      <br />
+              <br />
+            </>
+          );
+        })}
+      </p>
       <form
         onSubmit={(e) => {
           console.log("Updating settings");
@@ -115,7 +107,9 @@ export default function PiCameraControl(): JSX.Element {
               newSettings[key]["value"] = parseInt(e.value);
             }
           }
-          wsControlRef.current?.send(JSON.stringify(newSettings));
+          if (wsSendRef.current != undefined) {
+            wsSendRef.current(JSON.stringify(newSettings));
+          }
         }}
       >
         {Object.keys(settings).map((key) => {
