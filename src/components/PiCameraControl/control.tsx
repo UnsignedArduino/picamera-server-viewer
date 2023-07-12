@@ -60,7 +60,6 @@ export default function PiCameraControl(): JSX.Element {
       if (msg.type === "settings") {
         console.log("Received new settings");
         setSettings(msg.settings);
-        console.log(msg.settings);
       }
     };
     const connectControl = () => {
@@ -125,7 +124,11 @@ export default function PiCameraControl(): JSX.Element {
           return <></>;
         }
       })}
-      <button type="submit">Update settings</button>
+      {Object.keys(settings).length > 0 ? (
+        <button type="submit">Update</button>
+      ) : (
+        <></>
+      )}
     </form>
   );
 }

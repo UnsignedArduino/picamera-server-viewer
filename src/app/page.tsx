@@ -20,7 +20,6 @@ export default function Home() {
       {mount ? (
         <>
           <PiCameraStream />
-          <br />
           <PiCameraControl />
         </>
       ) : (
