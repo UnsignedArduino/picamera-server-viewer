@@ -49,6 +49,7 @@ function PiCameraSettingsNumber({
 export default function PiCameraControl(): JSX.Element {
   const wsControlRef = React.useRef<WebSocket | null>();
   const [settings, setSettings] = React.useState<object>({});
+  const [performance, setPerformance] = React.useState<object>({});
 
   React.useEffect(() => {
     const wsControl = new WebSocket(
@@ -60,6 +61,8 @@ export default function PiCameraControl(): JSX.Element {
       if (msg.type === "settings") {
         console.log("Received new settings");
         setSettings(msg.settings);
+      } else if (msg.type === "performance") {
+        setPerformance(msg.performance);
       }
     };
     const connectControl = () => {
@@ -80,55 +83,70 @@ export default function PiCameraControl(): JSX.Element {
   }, []);
 
   return (
-    <form
-      onSubmit={(e) => {
-        console.log("Updating settings");
-        e.preventDefault();
-        const newSettings = structuredClone(
-          settings as {
-            [key: string]: { [key: string]: string | string[] | number };
-          },
-        );
-        for (const [key, value] of Object.entries(newSettings)) {
-          if (value["selected"] != undefined) {
-            const e = getElement(key) as HTMLSelectElement;
-            newSettings[key]["selected"] = e.options[e.selectedIndex].value;
-          } else if (value["value"] != undefined) {
-            const e = getElement(key) as HTMLInputElement;
-            newSettings[key]["value"] = parseInt(e.value);
-          }
-        }
-        wsControlRef.current?.send(JSON.stringify(newSettings));
-      }}
-    >
-      {Object.keys(settings).map((key) => {
+    <div>
+      {Object.keys(performance).map((key) => {
         // @ts-ignore
-        const setting = settings[key];
-        if (setting["selected"] != undefined) {
-          return (
-            <PiCameraSettingSelector
-              key={`${key}-${setting.selected}`}
-              title={key}
-              setting={setting}
-            />
-          );
-        } else if (setting["value"] != undefined) {
-          return (
-            <PiCameraSettingsNumber
-              key={`${key}-${setting.value}`}
-              title={key}
-              setting={setting}
-            />
-          );
-        } else {
-          return <></>;
-        }
+        const value = performance[key];
+        return (
+          <>
+            <label key={`${key}-${value}`}>
+              {key.replaceAll("_", " ")}: {value}
+            </label>
+            <br />
+          </>
+        );
       })}
-      {Object.keys(settings).length > 0 ? (
-        <button type="submit">Update</button>
-      ) : (
-        <></>
-      )}
-    </form>
+      <br />
+      <form
+        onSubmit={(e) => {
+          console.log("Updating settings");
+          e.preventDefault();
+          const newSettings = structuredClone(
+            settings as {
+              [key: string]: { [key: string]: string | string[] | number };
+            },
+          );
+          for (const [key, value] of Object.entries(newSettings)) {
+            if (value["selected"] != undefined) {
+              const e = getElement(key) as HTMLSelectElement;
+              newSettings[key]["selected"] = e.options[e.selectedIndex].value;
+            } else if (value["value"] != undefined) {
+              const e = getElement(key) as HTMLInputElement;
+              newSettings[key]["value"] = parseInt(e.value);
+            }
+          }
+          wsControlRef.current?.send(JSON.stringify(newSettings));
+        }}
+      >
+        {Object.keys(settings).map((key) => {
+          // @ts-ignore
+          const setting = settings[key];
+          if (setting["selected"] != undefined) {
+            return (
+              <PiCameraSettingSelector
+                key={`${key}-${setting.selected}`}
+                title={key}
+                setting={setting}
+              />
+            );
+          } else if (setting["value"] != undefined) {
+            return (
+              <PiCameraSettingsNumber
+                key={`${key}-${setting.value}`}
+                title={key}
+                setting={setting}
+              />
+            );
+          } else {
+            return <></>;
+          }
+        })}
+        {Object.keys(settings).length > 0 ? (
+          <button type="submit">Update</button>
+        ) : (
+          <></>
+        )}
+      </form>
+    </div>
   );
 }
