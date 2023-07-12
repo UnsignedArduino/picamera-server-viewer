@@ -5,22 +5,50 @@ import getElement from "@/util/Element";
 
 export default function Home() {
   React.useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.hostname}:4000/stream`);
+    const wsStream = new WebSocket(
+      `ws://${window.location.hostname}:4000/stream`,
+    );
+    const wsControl = new WebSocket(
+      `ws://${window.location.hostname}:4000/control`,
+    );
     const img = getElement("stream") as HTMLImageElement;
+
     const imgOnLoadEvent = (e: Event) => {
       URL.revokeObjectURL((e.target as HTMLImageElement).src);
     };
-    img.addEventListener("onload", imgOnLoadEvent);
-    const wsOnMsgEvent = (e: MessageEvent) => {
+    const wsStreamOnMsgEvent = (e: MessageEvent) => {
       img.src = URL.createObjectURL(e.data);
     };
-    ws.addEventListener("message", wsOnMsgEvent);
-    console.log("Started websocket stream due to mount");
+    const connectStream = () => {
+      img.addEventListener("onload", imgOnLoadEvent);
+      wsStream.addEventListener("message", wsStreamOnMsgEvent);
+      console.log("Started websocket stream due to mount");
+    };
+    const disconnectStream = () => {
+      img.removeEventListener("onload", imgOnLoadEvent);
+      wsStream.removeEventListener("message", wsStreamOnMsgEvent);
+      wsStream.close();
+      console.log("Stopped websocket stream due to unmount");
+    };
+    const wsControlOnMsgEvent = (e: MessageEvent) => {
+      console.log(e.data);
+    };
+    const connectControl = () => {
+      wsControl.addEventListener("message", wsControlOnMsgEvent);
+      console.log("Started websocket control due to mount");
+    };
+    const disconnectControl = () => {
+      wsControl.removeEventListener("message", wsControlOnMsgEvent);
+      wsControl.close();
+      console.log("Stopped websocket control due to unmount");
+    };
+
+    connectStream();
+    connectControl();
 
     return () => {
-      img.removeEventListener("onload", imgOnLoadEvent);
-      ws.removeEventListener("message", wsOnMsgEvent);
-      console.log("Stopped websocket stream due to unmount");
+      disconnectStream();
+      disconnectControl();
     };
   });
 
