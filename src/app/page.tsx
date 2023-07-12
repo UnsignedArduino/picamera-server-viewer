@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
+import PiCameraSettings from "@/components/PiCameraSettings";
 import getElement from "@/util/Element";
 
 export default function Home() {
+  const [settings, setSettings] = React.useState<object>({});
+
   React.useEffect(() => {
     const wsStream = new WebSocket(
       `ws://${window.location.hostname}:4000/stream`,
@@ -31,7 +34,11 @@ export default function Home() {
       console.log("Stopped websocket stream due to unmount");
     };
     const wsControlOnMsgEvent = (e: MessageEvent) => {
-      console.log(e.data);
+      const msg = JSON.parse(e.data);
+      console.log(msg);
+      if (msg.type === "settings") {
+        setSettings(msg.settings);
+      }
     };
     const connectControl = () => {
       wsControl.addEventListener("message", wsControlOnMsgEvent);
@@ -56,6 +63,8 @@ export default function Home() {
     <main>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img id="stream" src="" alt="The PiCamera stream" />
+      <br />
+      <PiCameraSettings settings={settings} />
     </main>
   );
 }
