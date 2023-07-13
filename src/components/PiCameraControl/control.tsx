@@ -6,7 +6,12 @@ function PiCameraSettingSelector({
   setting,
 }: {
   title: string;
-  setting: { selected: string; available: string[] };
+  setting: {
+    selected: string;
+    available: string[];
+    default: string;
+    zero_is_auto: boolean | undefined;
+  };
 }): JSX.Element {
   return (
     <div>
@@ -15,7 +20,8 @@ function PiCameraSettingSelector({
         {setting.available.map((value) => {
           return (
             <option value={value} key={value}>
-              {value}
+              {setting.zero_is_auto && value === "0" ? "Auto" : value}
+              {value === setting.default ? " (default)" : ""}
             </option>
           );
         })}
@@ -29,7 +35,13 @@ function PiCameraSettingsNumber({
   setting,
 }: {
   title: string;
-  setting: { min: number; max: number; value: number };
+  setting: {
+    min: number;
+    max: number;
+    value: number;
+    default: number;
+    zero_is_auto: boolean | undefined;
+  };
 }): JSX.Element {
   return (
     <div>
@@ -42,6 +54,11 @@ function PiCameraSettingsNumber({
         max={setting.max}
         defaultValue={setting.value}
       />
+      <label htmlFor={title}>
+        {" "}
+        ({setting.min} to {setting.max}, default: {setting.default}
+        {setting.zero_is_auto ? " = auto" : ""})
+      </label>
     </div>
   );
 }
@@ -70,7 +87,7 @@ export default function PiCameraControl({
         setPerformance(msg.performance);
       }
     };
-  }, []);
+  }, [wsOnMsgEventCbRef]);
 
   return hide ? (
     <></>
@@ -101,10 +118,14 @@ export default function PiCameraControl({
           for (const [key, value] of Object.entries(newSettings)) {
             if (value["selected"] != undefined) {
               const e = getElement(key) as HTMLSelectElement;
-              newSettings[key]["selected"] = e.options[e.selectedIndex].value;
+              newSettings[key]["selected"] = e.options[e.selectedIndex].value
+                .replaceAll(" (default)", "")
+                .replaceAll("Auto", "0");
             } else if (value["value"] != undefined) {
               const e = getElement(key) as HTMLInputElement;
-              newSettings[key]["value"] = parseInt(e.value);
+              newSettings[key]["value"] = parseInt(
+                e.value.replaceAll(" (default)", "").replaceAll("Auto", "0"),
+              );
             }
           }
           if (wsSendRef.current != undefined) {
