@@ -4,6 +4,7 @@ import getElement from "@/util/Element";
 function PiCameraSettingSelector({
   title,
   setting,
+  disabled = false,
 }: {
   title: string;
   setting: {
@@ -12,11 +13,17 @@ function PiCameraSettingSelector({
     default: string;
     zero_is_auto: boolean | undefined;
   };
+  disabled: boolean;
 }): JSX.Element {
   return (
     <div>
       <label htmlFor={title}>{title.replaceAll("_", " ")}: </label>
-      <select name={title} id={title} defaultValue={setting.selected}>
+      <select
+        name={title}
+        id={title}
+        defaultValue={setting.selected}
+        disabled={disabled}
+      >
         {setting.available.map((value) => {
           return (
             <option value={value} key={value}>
@@ -33,6 +40,7 @@ function PiCameraSettingSelector({
 function PiCameraSettingsNumber({
   title,
   setting,
+  disabled = false,
 }: {
   title: string;
   setting: {
@@ -42,6 +50,7 @@ function PiCameraSettingsNumber({
     default: number;
     zero_is_auto: boolean | undefined;
   };
+  disabled: boolean;
 }): JSX.Element {
   return (
     <div>
@@ -53,6 +62,7 @@ function PiCameraSettingsNumber({
         min={setting.min}
         max={setting.max}
         defaultValue={setting.value}
+        disabled={disabled}
       />
       <label htmlFor={title}>
         {" "}
@@ -74,6 +84,7 @@ export default function PiCameraControl({
   wsSendRef: React.MutableRefObject<((_d: string) => void) | undefined>;
   hide: boolean;
 }): JSX.Element {
+  const [enableControl, setEnableControl] = React.useState(true);
   const [settings, setSettings] = React.useState<object>({});
   const [performance, setPerformance] = React.useState<object>({});
 
@@ -83,6 +94,10 @@ export default function PiCameraControl({
       if (msg.type === "settings") {
         console.log("Received new settings");
         setSettings(msg.settings);
+        setEnableControl(false);
+        setTimeout(() => {
+          setEnableControl(true);
+        }, 100);
       } else if (msg.type === "performance") {
         setPerformance(msg.performance);
       }
@@ -110,6 +125,7 @@ export default function PiCameraControl({
         onSubmit={(e) => {
           console.log("Updating settings");
           e.preventDefault();
+          setEnableControl(false);
           const newSettings = structuredClone(
             settings as {
               [key: string]: { [key: string]: string | string[] | number };
@@ -142,6 +158,7 @@ export default function PiCameraControl({
                 key={`${key}-${setting.selected}`}
                 title={key}
                 setting={setting}
+                disabled={!enableControl}
               />
             );
           } else if (setting["value"] != undefined) {
@@ -150,6 +167,7 @@ export default function PiCameraControl({
                 key={`${key}-${setting.value}`}
                 title={key}
                 setting={setting}
+                disabled={!enableControl}
               />
             );
           } else {
@@ -157,7 +175,9 @@ export default function PiCameraControl({
           }
         })}
         {Object.keys(settings).length > 0 ? (
-          <button type="submit">Update</button>
+          <button type="submit" disabled={!enableControl}>
+            Update
+          </button>
         ) : (
           <></>
         )}
