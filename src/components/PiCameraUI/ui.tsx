@@ -60,6 +60,11 @@ export default function PiCameraUI(): JSX.Element {
       if (wsControlCbRef.current != null) {
         wsControlCbRef.current(e);
       }
+      const d = JSON.parse(e.data);
+      if (d.type === "status") {
+        console.log("Received new status update");
+        setStatus(d.status);
+      }
     });
     wsStream.addEventListener("message", (e) => {
       if (wsStreamCbRef.current != null) {
@@ -86,7 +91,7 @@ export default function PiCameraUI(): JSX.Element {
 
   React.useEffect(() => {
     return connect();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>

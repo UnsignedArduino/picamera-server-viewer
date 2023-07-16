@@ -86,7 +86,6 @@ export default function PiCameraControl({
 }): JSX.Element {
   const [enableControl, setEnableControl] = React.useState(true);
   const [settings, setSettings] = React.useState<object>({});
-  const [performance, setPerformance] = React.useState<object>({});
 
   React.useEffect(() => {
     wsOnMsgEventCbRef.current = (e: MessageEvent) => {
@@ -98,8 +97,6 @@ export default function PiCameraControl({
         setTimeout(() => {
           setEnableControl(true);
         }, 100);
-      } else if (msg.type === "performance") {
-        setPerformance(msg.performance);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -108,19 +105,6 @@ export default function PiCameraControl({
     <></>
   ) : (
     <div>
-      <p>{status}</p>
-      <p>
-        {Object.keys(performance).map((key) => {
-          // @ts-ignore
-          const value = performance[key];
-          return (
-            <>
-              {key.replaceAll("_", " ")}: {value}
-              <br />
-            </>
-          );
-        })}
-      </p>
       <form
         onSubmit={(e) => {
           console.log("Updating settings");
@@ -145,7 +129,12 @@ export default function PiCameraControl({
             }
           }
           if (wsSendRef.current != undefined) {
-            wsSendRef.current(JSON.stringify(newSettings));
+            wsSendRef.current(
+              JSON.stringify({
+                type: "settings",
+                settings: newSettings,
+              }),
+            );
           }
         }}
       >
