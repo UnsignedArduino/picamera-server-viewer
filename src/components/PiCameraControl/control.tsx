@@ -73,6 +73,45 @@ function PiCameraSettingsNumber({
   );
 }
 
+function PiCameraSettingsNumberSlider({
+  title,
+  setting,
+  disabled = false,
+  onChange,
+}: {
+  title: string;
+  setting: {
+    min: number;
+    max: number;
+    value: number;
+    default: number;
+  };
+  disabled: boolean;
+  onChange: () => void;
+}): JSX.Element {
+  return (
+    <div>
+      <label htmlFor={title}>
+        {title.replaceAll("_", " ")}: {setting.value}{" "}
+      </label>
+      <input
+        type="range"
+        name={title}
+        id={title}
+        min={setting.min}
+        max={setting.max}
+        defaultValue={setting.value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+      <label htmlFor={title}>
+        {" "}
+        ({setting.min} to {setting.max}, default: {setting.default})
+      </label>
+    </div>
+  );
+}
+
 export default function PiCameraControl({
   wsOnMsgEventCbRef,
   wsSendRef,
@@ -86,6 +125,7 @@ export default function PiCameraControl({
 }): JSX.Element {
   const [enableControl, setEnableControl] = React.useState(true);
   const [settings, setSettings] = React.useState<object>({});
+  const [directions, setDirections] = React.useState<object>({});
 
   React.useEffect(() => {
     wsOnMsgEventCbRef.current = (e: MessageEvent) => {
@@ -97,6 +137,9 @@ export default function PiCameraControl({
         setTimeout(() => {
           setEnableControl(true);
         }, 100);
+      } else if (msg.type === "pan_tilt") {
+        console.log("Received new pan-tilt");
+        setDirections(msg.pan_tilt);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -105,72 +148,115 @@ export default function PiCameraControl({
     <></>
   ) : (
     <div>
-      <form
-        onSubmit={(e) => {
-          console.log("Updating settings");
-          e.preventDefault();
-          setEnableControl(false);
-          const newSettings = structuredClone(
-            settings as {
-              [key: string]: { [key: string]: string | string[] | number };
-            },
-          );
-          for (const [key, value] of Object.entries(newSettings)) {
-            if (value["selected"] != undefined) {
-              const e = getElement(key) as HTMLSelectElement;
-              newSettings[key]["selected"] = e.options[e.selectedIndex].value
-                .replaceAll(" (default)", "")
-                .replaceAll("Auto", "0");
-            } else if (value["value"] != undefined) {
-              const e = getElement(key) as HTMLInputElement;
-              newSettings[key]["value"] = parseInt(
-                e.value.replaceAll(" (default)", "").replaceAll("Auto", "0"),
+      <div>
+        <form
+          onSubmit={(e) => {
+            console.log("Updating settings");
+            e.preventDefault();
+            setEnableControl(false);
+            const newSettings = structuredClone(
+              settings as {
+                [key: string]: { [key: string]: string | string[] | number };
+              },
+            );
+            for (const [key, value] of Object.entries(newSettings)) {
+              if (value["selected"] != undefined) {
+                const e = getElement(key) as HTMLSelectElement;
+                newSettings[key]["selected"] = e.options[e.selectedIndex].value
+                  .replaceAll(" (default)", "")
+                  .replaceAll("Auto", "0");
+              } else if (value["value"] != undefined) {
+                const e = getElement(key) as HTMLInputElement;
+                newSettings[key]["value"] = parseInt(
+                  e.value.replaceAll(" (default)", "").replaceAll("Auto", "0"),
+                );
+              }
+            }
+            if (wsSendRef.current != undefined) {
+              wsSendRef.current(
+                JSON.stringify({
+                  type: "settings",
+                  settings: newSettings,
+                }),
               );
             }
-          }
-          if (wsSendRef.current != undefined) {
-            wsSendRef.current(
-              JSON.stringify({
-                type: "settings",
-                settings: newSettings,
-              }),
-            );
-          }
-        }}
-      >
-        {Object.keys(settings).map((key) => {
+          }}
+        >
+          {Object.keys(settings).map((key) => {
+            // @ts-ignore
+            const setting = settings[key];
+            if (setting["selected"] != undefined) {
+              return (
+                <PiCameraSettingSelector
+                  key={`${key}-${setting.selected}`}
+                  title={key}
+                  setting={setting}
+                  disabled={!enableControl}
+                />
+              );
+            } else if (setting["value"] != undefined) {
+              return (
+                <PiCameraSettingsNumber
+                  key={`${key}-${setting.value}`}
+                  title={key}
+                  setting={setting}
+                  disabled={!enableControl}
+                />
+              );
+            } else {
+              return <></>;
+            }
+          })}
+          {Object.keys(settings).length > 0 ? (
+            <button type="submit" disabled={!enableControl}>
+              Update
+            </button>
+          ) : (
+            <></>
+          )}
+        </form>
+      </div>
+      <div>
+        {Object.keys(directions).map((key) => {
           // @ts-ignore
-          const setting = settings[key];
-          if (setting["selected"] != undefined) {
+          const dir = directions[key];
+          if (dir["value"] != undefined) {
             return (
-              <PiCameraSettingSelector
-                key={`${key}-${setting.selected}`}
+              <PiCameraSettingsNumberSlider
+                key={`${key}-${dir.value}`}
                 title={key}
-                setting={setting}
+                setting={dir}
                 disabled={!enableControl}
-              />
-            );
-          } else if (setting["value"] != undefined) {
-            return (
-              <PiCameraSettingsNumber
-                key={`${key}-${setting.value}`}
-                title={key}
-                setting={setting}
-                disabled={!enableControl}
+                onChange={() => {
+                  console.log("Updating pan-tilt");
+                  setEnableControl(false);
+                  const newDirections = structuredClone(
+                    directions as {
+                      [key: string]: { [key: string]: number };
+                    },
+                  );
+                  for (const [key, value] of Object.entries(newDirections)) {
+                    if (value["value"] != undefined) {
+                      const e = getElement(key) as HTMLInputElement;
+                      newDirections[key]["value"] = parseInt(e.value);
+                    }
+                  }
+                  if (wsSendRef.current != undefined) {
+                    wsSendRef.current(
+                      JSON.stringify({
+                        type: "pan_tilt",
+                        pan_tilt: newDirections,
+                      }),
+                    );
+                  }
+                }}
               />
             );
           } else {
             return <></>;
           }
         })}
-        {Object.keys(settings).length > 0 ? (
-          <button type="submit" disabled={!enableControl}>
-            Update
-          </button>
-        ) : (
-          <></>
-        )}
-      </form>
+      </div>
     </div>
   );
 }
