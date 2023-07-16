@@ -126,6 +126,7 @@ export default function PiCameraControl({
   const [enableControl, setEnableControl] = React.useState(true);
   const [settings, setSettings] = React.useState<object>({});
   const [directions, setDirections] = React.useState<object>({});
+  const [photo, setPhoto] = React.useState("");
 
   React.useEffect(() => {
     wsOnMsgEventCbRef.current = (e: MessageEvent) => {
@@ -140,6 +141,10 @@ export default function PiCameraControl({
       } else if (msg.type === "pan_tilt") {
         console.log("Received new pan-tilt");
         setDirections(msg.pan_tilt);
+      } else if (msg.type === "photo_request_result") {
+        console.log("Received photo request result");
+        setEnableControl(true);
+        setPhoto(msg.photo_request_result);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -256,6 +261,37 @@ export default function PiCameraControl({
             return <></>;
           }
         })}
+      </div>
+      <div>
+        <button
+          type="button"
+          disabled={!enableControl}
+          onClick={() => {
+            console.log("Requesting photo shot");
+            setEnableControl(false);
+            if (wsSendRef.current != undefined) {
+              wsSendRef.current(
+                JSON.stringify({
+                  type: "photo_request",
+                }),
+              );
+            }
+          }}
+        >
+          Take photo
+        </button>
+        {photo.length > 0 ? (
+          <>
+            <br />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/jpg;base64,${photo}`}
+              alt="Picture of captured image"
+            />
+          </>
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   );
