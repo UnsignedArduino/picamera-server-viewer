@@ -16,7 +16,7 @@ function PiCameraSettingSelector({
   disabled: boolean;
 }): JSX.Element {
   return (
-    <div>
+    <div className="mb-2">
       <label className="form-label" htmlFor={title}>
         {title.replaceAll("_", " ")}:{" "}
       </label>
@@ -56,7 +56,7 @@ function PiCameraSettingsNumber({
   disabled: boolean;
 }): JSX.Element {
   return (
-    <div>
+    <div className="mb-2">
       <label className="form-label" htmlFor={title}>
         {title.replaceAll("_", " ")}:{" "}
       </label>
@@ -96,11 +96,12 @@ function PiCameraSettingsNumberSlider({
   onChange: () => void;
 }): JSX.Element {
   return (
-    <div>
-      <label htmlFor={title}>
+    <div className="mb-2">
+      <label className="form-label" htmlFor={title}>
         {title.replaceAll("_", " ")}: {setting.value}{" "}
       </label>
       <input
+        className="form-range"
         type="range"
         name={title}
         id={title}
@@ -110,7 +111,7 @@ function PiCameraSettingsNumberSlider({
         onChange={onChange}
         disabled={disabled}
       />
-      <label htmlFor={title}>
+      <label className="form-text" htmlFor={title}>
         {" "}
         ({setting.min} to {setting.max}, default: {setting.default})
       </label>
@@ -159,6 +160,48 @@ export default function PiCameraControl({
     <></>
   ) : (
     <div className="px-1" style={{ maxHeight: "95vh", overflowY: "scroll" }}>
+      <div>
+        {Object.keys(directions).map((key) => {
+          // @ts-ignore
+          const dir = directions[key];
+          if (dir["value"] != undefined) {
+            return (
+              <PiCameraSettingsNumberSlider
+                key={`${key}-${dir.value}`}
+                title={key}
+                setting={dir}
+                disabled={!enableControl}
+                onChange={() => {
+                  console.log("Updating pan-tilt");
+                  setEnableControl(false);
+                  const newDirections = structuredClone(
+                    directions as {
+                      [key: string]: { [key: string]: number };
+                    },
+                  );
+                  for (const [key, value] of Object.entries(newDirections)) {
+                    if (value["value"] != undefined) {
+                      const e = getElement(key) as HTMLInputElement;
+                      newDirections[key]["value"] = parseInt(e.value);
+                    }
+                  }
+                  if (wsSendRef.current != undefined) {
+                    wsSendRef.current(
+                      JSON.stringify({
+                        type: "pan_tilt",
+                        pan_tilt: newDirections,
+                      }),
+                    );
+                  }
+                }}
+              />
+            );
+          } else {
+            return <></>;
+          }
+        })}
+      </div>
+      <hr />
       <div>
         <form
           onSubmit={(e) => {
@@ -231,47 +274,7 @@ export default function PiCameraControl({
           )}
         </form>
       </div>
-      <div>
-        {Object.keys(directions).map((key) => {
-          // @ts-ignore
-          const dir = directions[key];
-          if (dir["value"] != undefined) {
-            return (
-              <PiCameraSettingsNumberSlider
-                key={`${key}-${dir.value}`}
-                title={key}
-                setting={dir}
-                disabled={!enableControl}
-                onChange={() => {
-                  console.log("Updating pan-tilt");
-                  setEnableControl(false);
-                  const newDirections = structuredClone(
-                    directions as {
-                      [key: string]: { [key: string]: number };
-                    },
-                  );
-                  for (const [key, value] of Object.entries(newDirections)) {
-                    if (value["value"] != undefined) {
-                      const e = getElement(key) as HTMLInputElement;
-                      newDirections[key]["value"] = parseInt(e.value);
-                    }
-                  }
-                  if (wsSendRef.current != undefined) {
-                    wsSendRef.current(
-                      JSON.stringify({
-                        type: "pan_tilt",
-                        pan_tilt: newDirections,
-                      }),
-                    );
-                  }
-                }}
-              />
-            );
-          } else {
-            return <></>;
-          }
-        })}
-      </div>
+      <hr />
       <div>
         <button
           type="button"
