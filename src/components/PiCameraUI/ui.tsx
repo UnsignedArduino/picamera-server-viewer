@@ -94,21 +94,40 @@ export default function PiCameraUI(): JSX.Element {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="container-fluid">
-      <div className="row pt-2">
-        <div
-          className="col ps-2 pe-0"
-          style={{ minWidth: "75vw", maxWidth: "75vw" }}
-        >
-          <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />
-          <p>{status}</p>
+    <div
+      className="container g-0 py-2 d-block"
+      style={{
+        minWidth: "100vw",
+        maxWidth: "100vw",
+        minHeight: "100vh",
+        maxHeight: "100vh",
+      }}
+    >
+      <div className="row m-0 p-0 d-block">
+        <div className="row m-0 gx-2">
+          <div
+            className="col d-block"
+            style={{
+              minWidth: "75vw",
+              maxWidth: "75vw",
+              minHeight: "90vh",
+              maxHeight: "90vh",
+            }}
+          >
+            <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />
+          </div>
+          <div className="col d-block">
+            <PiCameraControl
+              wsOnMsgEventCbRef={wsControlCbRef}
+              wsSendRef={wsControlSendCbRef}
+              hide={!showUI}
+            />
+          </div>
         </div>
-        <div className="col">
-          <PiCameraControl
-            wsOnMsgEventCbRef={wsControlCbRef}
-            wsSendRef={wsControlSendCbRef}
-            hide={!showUI}
-          />
+      </div>
+      <div className="row m-0 p-0 d-block">
+        <div className="col p-2 m-0">
+          <label>{status}</label>
         </div>
       </div>
     </div>

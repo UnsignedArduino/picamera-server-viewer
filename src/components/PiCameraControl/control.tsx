@@ -17,8 +17,11 @@ function PiCameraSettingSelector({
 }): JSX.Element {
   return (
     <div>
-      <label htmlFor={title}>{title.replaceAll("_", " ")}: </label>
+      <label className="form-label" htmlFor={title}>
+        {title.replaceAll("_", " ")}:{" "}
+      </label>
       <select
+        className="form-select"
         name={title}
         id={title}
         defaultValue={setting.selected}
@@ -54,8 +57,11 @@ function PiCameraSettingsNumber({
 }): JSX.Element {
   return (
     <div>
-      <label htmlFor={title}>{title.replaceAll("_", " ")}: </label>
+      <label className="form-label" htmlFor={title}>
+        {title.replaceAll("_", " ")}:{" "}
+      </label>
       <input
+        className="form-control"
         type="number"
         name={title}
         id={title}
@@ -64,7 +70,7 @@ function PiCameraSettingsNumber({
         defaultValue={setting.value}
         disabled={disabled}
       />
-      <label htmlFor={title}>
+      <label className="form-text" htmlFor={title}>
         {" "}
         ({setting.min} to {setting.max}, default: {setting.default}
         {setting.zero_is_auto ? " = auto" : ""})
@@ -152,7 +158,7 @@ export default function PiCameraControl({
   return hide ? (
     <></>
   ) : (
-    <div>
+    <div className="px-1" style={{ maxHeight: "90vh", overflowY: "scroll" }}>
       <div>
         <form
           onSubmit={(e) => {
@@ -213,7 +219,11 @@ export default function PiCameraControl({
             }
           })}
           {Object.keys(settings).length > 0 ? (
-            <button type="submit" disabled={!enableControl}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={!enableControl}
+            >
               Update
             </button>
           ) : (
@@ -262,37 +272,37 @@ export default function PiCameraControl({
           }
         })}
       </div>
-      <div>
-        <button
-          type="button"
-          disabled={!enableControl}
-          onClick={() => {
-            console.log("Requesting photo shot");
-            setEnableControl(false);
-            if (wsSendRef.current != undefined) {
-              wsSendRef.current(
-                JSON.stringify({
-                  type: "photo_request",
-                }),
-              );
-            }
-          }}
-        >
-          Take photo
-        </button>
-        {photo.length > 0 ? (
-          <>
-            <br />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/jpg;base64,${photo}`}
-              alt="Picture of captured image"
-            />
-          </>
-        ) : (
-          <></>
-        )}
-      </div>
+      {/*<div>*/}
+      {/*  <button*/}
+      {/*    type="button"*/}
+      {/*    disabled={!enableControl}*/}
+      {/*    onClick={() => {*/}
+      {/*      console.log("Requesting photo shot");*/}
+      {/*      setEnableControl(false);*/}
+      {/*      if (wsSendRef.current != undefined) {*/}
+      {/*        wsSendRef.current(*/}
+      {/*          JSON.stringify({*/}
+      {/*            type: "photo_request",*/}
+      {/*          }),*/}
+      {/*        );*/}
+      {/*      }*/}
+      {/*    }}*/}
+      {/*  >*/}
+      {/*    Take photo*/}
+      {/*  </button>*/}
+      {/*  {photo.length > 0 ? (*/}
+      {/*    <>*/}
+      {/*      <br />*/}
+      {/*      /!* eslint-disable-next-line @next/next/no-img-element *!/*/}
+      {/*      <img*/}
+      {/*        src={`data:image/jpg;base64,${photo}`}*/}
+      {/*        alt="Picture of captured image"*/}
+      {/*      />*/}
+      {/*    </>*/}
+      {/*  ) : (*/}
+      {/*    <></>*/}
+      {/*  )}*/}
+      {/*</div>*/}
     </div>
   );
 }

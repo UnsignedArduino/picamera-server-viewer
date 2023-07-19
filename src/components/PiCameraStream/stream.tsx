@@ -33,13 +33,10 @@ export default function PiCameraStream({
         alt="The PiCamera stream"
         hidden={hide}
         style={{
-          display: "block",
-          marginTop: "auto",
-          marginBottom: "auto",
           minWidth: "100%",
           maxWidth: "100%",
-          minHeight: "95vh",
-          maxHeight: "95vh",
+          minHeight: "100%",
+          maxHeight: "100%",
           objectFit: "contain",
         }}
       />
