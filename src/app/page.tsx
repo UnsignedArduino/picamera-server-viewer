@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Notifications from "@/components/Notifications";
 import PiCameraUI from "@/components/PiCameraUI";
 
 export default function Home() {
@@ -18,5 +19,16 @@ export default function Home() {
     };
   }, []);
 
-  return <main>{mount ? <PiCameraUI /> : <></>}</main>;
+  return (
+    <main>
+      {mount ? (
+        <>
+          <PiCameraUI />
+          <Notifications />
+        </>
+      ) : (
+        <></>
+      )}
+    </main>
+  );
 }

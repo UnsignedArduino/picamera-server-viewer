@@ -1,4 +1,7 @@
 import React from "react";
+import { NotificationType, notify } from "@/components/Notifications";
+import { dataURLToBlob } from "@/util/Blob";
+import { copyImageBlobToClipboard } from "@/util/Clipboard";
 import getElement from "@/util/Element";
 
 function PiCameraSettingSelector({
@@ -151,7 +154,7 @@ export default function PiCameraControl({
       } else if (msg.type === "photo_request_result") {
         console.log("Received photo request result");
         setEnableControl(true);
-        setPhoto(msg.photo_request_result);
+        setPhoto(`data:image/jpg;base64,${msg.photo_request_result}`);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -217,7 +220,7 @@ export default function PiCameraControl({
                     <p>Photo successfully taken!</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`data:image/jpg;base64,${photo}`}
+                      src={photo}
                       alt="Picture of captured image"
                       style={{
                         minWidth: "100%",
@@ -233,6 +236,33 @@ export default function PiCameraControl({
                 )}
               </div>
               <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    dataURLToBlob(photo)
+                      .then((b) => {
+                        return copyImageBlobToClipboard(b);
+                      })
+                      .then(() => {
+                        notify(
+                          "Successfully copied to clipboard!",
+                          NotificationType.Success,
+                        );
+                      })
+                      .catch(() => {
+                        notify(
+                          "Failed to copy to clipboard!",
+                          NotificationType.Error,
+                        );
+                      });
+                  }}
+                >
+                  Copy
+                </button>
+                <button type="button" className="btn btn-primary">
+                  Download
+                </button>
                 <button
                   type="button"
                   className="btn btn-secondary"

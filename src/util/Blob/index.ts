@@ -1,1 +1,1 @@
-export { default } from "./base64";
+export { blobToBase64, dataURLToBlob } from "./base64";
