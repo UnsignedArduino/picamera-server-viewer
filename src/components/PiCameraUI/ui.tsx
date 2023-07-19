@@ -110,8 +110,8 @@ export default function PiCameraUI(): JSX.Element {
             style={{
               minWidth: "75vw",
               maxWidth: "75vw",
-              minHeight: "90vh",
-              maxHeight: "90vh",
+              minHeight: "95vh",
+              maxHeight: "95vh",
             }}
           >
             <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />

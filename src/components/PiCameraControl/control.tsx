@@ -158,7 +158,7 @@ export default function PiCameraControl({
   return hide ? (
     <></>
   ) : (
-    <div className="px-1" style={{ maxHeight: "90vh", overflowY: "scroll" }}>
+    <div className="px-1" style={{ maxHeight: "95vh", overflowY: "scroll" }}>
       <div>
         <form
           onSubmit={(e) => {
@@ -272,37 +272,37 @@ export default function PiCameraControl({
           }
         })}
       </div>
-      {/*<div>*/}
-      {/*  <button*/}
-      {/*    type="button"*/}
-      {/*    disabled={!enableControl}*/}
-      {/*    onClick={() => {*/}
-      {/*      console.log("Requesting photo shot");*/}
-      {/*      setEnableControl(false);*/}
-      {/*      if (wsSendRef.current != undefined) {*/}
-      {/*        wsSendRef.current(*/}
-      {/*          JSON.stringify({*/}
-      {/*            type: "photo_request",*/}
-      {/*          }),*/}
-      {/*        );*/}
-      {/*      }*/}
-      {/*    }}*/}
-      {/*  >*/}
-      {/*    Take photo*/}
-      {/*  </button>*/}
-      {/*  {photo.length > 0 ? (*/}
-      {/*    <>*/}
-      {/*      <br />*/}
-      {/*      /!* eslint-disable-next-line @next/next/no-img-element *!/*/}
-      {/*      <img*/}
-      {/*        src={`data:image/jpg;base64,${photo}`}*/}
-      {/*        alt="Picture of captured image"*/}
-      {/*      />*/}
-      {/*    </>*/}
-      {/*  ) : (*/}
-      {/*    <></>*/}
-      {/*  )}*/}
-      {/*</div>*/}
+      <div>
+        <button
+          type="button"
+          disabled={!enableControl}
+          onClick={() => {
+            console.log("Requesting photo shot");
+            setEnableControl(false);
+            if (wsSendRef.current != undefined) {
+              wsSendRef.current(
+                JSON.stringify({
+                  type: "photo_request",
+                }),
+              );
+            }
+          }}
+        >
+          Take photo
+        </button>
+        {photo.length > 0 ? (
+          <>
+            <br />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/jpg;base64,${photo}`}
+              alt="Picture of captured image"
+            />
+          </>
+        ) : (
+          <></>
+        )}
+      </div>
     </div>
   );
 }
