@@ -160,6 +160,40 @@ export default function PiCameraControl({
     <></>
   ) : (
     <div className="px-1" style={{ maxHeight: "95vh", overflowY: "scroll" }}>
+      <h3>Control</h3>
+      <div>
+        <button
+          type="button"
+          disabled={!enableControl}
+          onClick={() => {
+            console.log("Requesting photo shot");
+            setEnableControl(false);
+            if (wsSendRef.current != undefined) {
+              wsSendRef.current(
+                JSON.stringify({
+                  type: "photo_request",
+                }),
+              );
+            }
+          }}
+        >
+          Take photo
+        </button>
+        {photo.length > 0 ? (
+          <>
+            <br />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`data:image/jpg;base64,${photo}`}
+              alt="Picture of captured image"
+            />
+          </>
+        ) : (
+          <></>
+        )}
+      </div>
+      <hr />
+      <h3>Pan-tilt control</h3>
       <div>
         {Object.keys(directions).map((key) => {
           // @ts-ignore
@@ -202,6 +236,7 @@ export default function PiCameraControl({
         })}
       </div>
       <hr />
+      <h3>Camera settings</h3>
       <div>
         <form
           onSubmit={(e) => {
@@ -273,38 +308,6 @@ export default function PiCameraControl({
             <></>
           )}
         </form>
-      </div>
-      <hr />
-      <div>
-        <button
-          type="button"
-          disabled={!enableControl}
-          onClick={() => {
-            console.log("Requesting photo shot");
-            setEnableControl(false);
-            if (wsSendRef.current != undefined) {
-              wsSendRef.current(
-                JSON.stringify({
-                  type: "photo_request",
-                }),
-              );
-            }
-          }}
-        >
-          Take photo
-        </button>
-        {photo.length > 0 ? (
-          <>
-            <br />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/jpg;base64,${photo}`}
-              alt="Picture of captured image"
-            />
-          </>
-        ) : (
-          <></>
-        )}
       </div>
     </div>
   );
