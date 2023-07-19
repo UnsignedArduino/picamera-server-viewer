@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Head from "next/head";
+import React from "react";
 
 export const metadata: Metadata = {
   title: "PiCamera Server",

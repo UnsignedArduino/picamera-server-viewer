@@ -156,15 +156,27 @@ export default function PiCameraControl({
     };
   }, [wsOnMsgEventCbRef]);
 
-  return hide ? (
-    <></>
-  ) : (
-    <div className="px-1" style={{ maxHeight: "95vh", overflowY: "scroll" }}>
+  React.useEffect(() => {
+    const div = getElement("photoTakenModal") as HTMLDivElement;
+    div.addEventListener("hidden.bs.modal", () => {
+      setPhoto("");
+    });
+  }, []);
+
+  return (
+    <div
+      className="px-1"
+      style={{ maxHeight: "95vh", overflowY: "scroll" }}
+      hidden={hide}
+    >
       <h3>Control</h3>
       <div>
         <button
+          className="btn btn-primary"
           type="button"
           disabled={!enableControl}
+          data-bs-toggle="modal"
+          data-bs-target="#photoTakenModal"
           onClick={() => {
             console.log("Requesting photo shot");
             setEnableControl(false);
@@ -177,20 +189,61 @@ export default function PiCameraControl({
             }
           }}
         >
-          Take photo
+          Capture photo
         </button>
-        {photo.length > 0 ? (
-          <>
-            <br />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/jpg;base64,${photo}`}
-              alt="Picture of captured image"
-            />
-          </>
-        ) : (
-          <></>
-        )}
+        <div
+          className="modal fade"
+          id="photoTakenModal"
+          tabIndex={-1}
+          aria-labelledby="photoTakenModalTitle"
+          aria-hidden="true"
+        >
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h1 className="modal-title fs-5" id="photoTakenModalTitle">
+                  Photo capture
+                </h1>
+                <button
+                  type="button"
+                  className="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body">
+                {photo.length > 0 ? (
+                  <>
+                    <p>Photo successfully taken!</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`data:image/jpg;base64,${photo}`}
+                      alt="Picture of captured image"
+                      style={{
+                        minWidth: "100%",
+                        maxWidth: "100%",
+                        minHeight: "100%",
+                        maxHeight: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </>
+                ) : (
+                  <p>Photo loading...</p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <hr />
       <h3>Pan-tilt control</h3>
