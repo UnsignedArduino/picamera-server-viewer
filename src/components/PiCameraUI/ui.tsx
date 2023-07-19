@@ -94,14 +94,23 @@ export default function PiCameraUI(): JSX.Element {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div>
-      <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />
-      <p>{status}</p>
-      <PiCameraControl
-        wsOnMsgEventCbRef={wsControlCbRef}
-        wsSendRef={wsControlSendCbRef}
-        hide={!showUI}
-      />
+    <div className="container-fluid">
+      <div className="row pt-2">
+        <div
+          className="col ps-2 pe-0"
+          style={{ minWidth: "75vw", maxWidth: "75vw" }}
+        >
+          <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />
+          <p>{status}</p>
+        </div>
+        <div className="col">
+          <PiCameraControl
+            wsOnMsgEventCbRef={wsControlCbRef}
+            wsSendRef={wsControlSendCbRef}
+            hide={!showUI}
+          />
+        </div>
+      </div>
     </div>
   );
 }

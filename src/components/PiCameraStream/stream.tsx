@@ -22,12 +22,27 @@ export default function PiCameraStream({
     return () => {
       img.removeEventListener("onload", imgOnLoadEvent);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img id="stream" src="" alt="The PiCamera stream" hidden={hide} />
+      <img
+        id="stream"
+        src=""
+        alt="The PiCamera stream"
+        hidden={hide}
+        style={{
+          display: "block",
+          marginTop: "auto",
+          marginBottom: "auto",
+          minWidth: "100%",
+          maxWidth: "100%",
+          minHeight: "95vh",
+          maxHeight: "95vh",
+          objectFit: "contain",
+        }}
+      />
     </div>
   );
 }
