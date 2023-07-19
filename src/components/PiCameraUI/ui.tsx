@@ -1,6 +1,7 @@
 import React from "react";
 import PiCameraControl from "@/components/PiCameraControl";
 import PiCameraStream from "@/components/PiCameraStream";
+import getElement from "@/util/Element";
 
 export default function PiCameraUI(): JSX.Element {
   const wsStreamRef = React.useRef<WebSocket>();
@@ -11,26 +12,35 @@ export default function PiCameraUI(): JSX.Element {
   const [status, setStatus] = React.useState("Disconnected.");
   let connectedWs = 0;
   const [showUI, setShowUI] = React.useState(false);
+  const [disableConnectUI, setDisableConnectUI] = React.useState(false);
+  const [serverURL, setServerURL] = React.useState("");
+  const [serverPort, setServerPort] = React.useState(4000);
+  const [tryConnectResponse, setTryConnectResponse] = React.useState("");
 
-  const disconnect = () => {
+  const disconnect = (dueToError: boolean = false) => {
     console.log("Disconnecting all websockets");
     wsStreamRef.current?.close();
     wsControlRef.current?.close();
     connectedWs = 0;
     setShowUI(false);
-    setStatus("Disconnected.");
+    setDisableConnectUI(false);
+    if (dueToError) {
+      setStatus("Disconnected or failed to connect!");
+      setTryConnectResponse("Disconnected or failed to connect!");
+    } else {
+      setStatus("Disconnected.");
+      setTryConnectResponse("Disconnected.");
+    }
   };
 
-  const connect = () => {
+  const connect = (url: string, port: number = 4000) => {
     disconnect();
+    setDisableConnectUI(true);
     setStatus("Connecting... (0/2)");
+    setTryConnectResponse("");
 
-    const wsControl = new WebSocket(
-      `ws://${window.location.hostname}:4000/control`,
-    );
-    const wsStream = new WebSocket(
-      `ws://${window.location.hostname}:4000/stream`,
-    );
+    const wsControl = new WebSocket(`ws://${url}:${port}/control`);
+    const wsStream = new WebSocket(`ws://${url}:${port}/stream`);
     wsControl.addEventListener("open", () => {
       console.log("Control websocket connected!");
       wsControlRef.current = wsControl;
@@ -71,27 +81,29 @@ export default function PiCameraUI(): JSX.Element {
         wsStreamCbRef.current(e);
       }
     });
-    wsControl.addEventListener("close", () => {
+    const wsControlCloseCb = () => {
       console.log("Control websocket closed");
       disconnect();
-    });
-    wsStream.addEventListener("close", () => {
+    };
+    wsControl.addEventListener("close", wsControlCloseCb);
+    const wsStreamCloseCb = () => {
       console.log("Control websocket closed");
       disconnect();
-    });
+    };
+    wsStream.addEventListener("close", wsStreamCloseCb);
     wsControl.addEventListener("error", () => {
       console.log("Control websocket closed due to error");
-      disconnect();
+      wsControl.removeEventListener("close", wsControlCloseCb);
+      wsStream.removeEventListener("close", wsStreamCloseCb);
+      disconnect(true);
     });
     wsStream.addEventListener("error", () => {
       console.log("Control websocket closed due to error");
-      disconnect();
+      wsControl.removeEventListener("close", wsControlCloseCb);
+      wsStream.removeEventListener("close", wsStreamCloseCb);
+      disconnect(true);
     });
   };
-
-  React.useEffect(() => {
-    return connect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -122,6 +134,82 @@ export default function PiCameraUI(): JSX.Element {
               wsSendRef={wsControlSendCbRef}
               hide={!showUI}
             />
+            {!showUI ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setDisableConnectUI(true);
+                  const url = (getElement("serverURLInput") as HTMLInputElement)
+                    .value;
+                  setServerURL(url);
+                  const port = parseInt(
+                    (getElement("serverPortInput") as HTMLInputElement).value,
+                  );
+                  setServerPort(port);
+                  setTimeout(() => {
+                    connect(url, port);
+                  }, 100);
+                }}
+              >
+                <h3>Connect</h3>
+                <div className="mb-2">
+                  <label htmlFor="serverURLInput" className="form-label">
+                    Server URL:
+                  </label>
+                  <input
+                    type="text"
+                    id="serverURLInput"
+                    className="form-control"
+                    defaultValue={serverURL}
+                    onChange={(e) => {
+                      setServerURL(e.target.value);
+                    }}
+                    disabled={disableConnectUI}
+                  />
+                  <div className="form-text">
+                    This is the IP address of your Raspberry Pi.
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <label htmlFor="serverPortInput" className="form-label">
+                    Server port:
+                  </label>
+                  <input
+                    type="number"
+                    id="serverPortInput"
+                    className="form-control"
+                    defaultValue={serverPort}
+                    disabled={disableConnectUI}
+                    min={0}
+                    max={2 ** 16 - 1}
+                    onChange={(e) => {
+                      setServerPort(parseInt(e.target.value));
+                    }}
+                  />
+                  <div className="form-text">
+                    This is the port the server is running on. Defaults to{" "}
+                    <code>4000</code> and should not be changed unless you have
+                    modified the server program to run on a different port.
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={disableConnectUI || serverURL.length === 0}
+                >
+                  Connect
+                </button>
+                {tryConnectResponse.length > 0 ? (
+                  <div className="alert alert-danger mt-3" role="alert">
+                    {tryConnectResponse}
+                  </div>
+                ) : (
+                  <></>
+                )}
+              </form>
+            ) : (
+              <></>
+            )}
           </div>
         </div>
       </div>
