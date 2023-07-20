@@ -2,6 +2,7 @@ import React from "react";
 import { NotificationType, notify } from "@/components/Notifications";
 import { dataURLToBlob } from "@/util/Blob";
 import { copyPNGBlobToClipboard } from "@/util/Clipboard";
+import { downloadSomething } from "@/util/Download";
 import getElement from "@/util/Element";
 
 function PiCameraSettingSelector({
@@ -239,6 +240,7 @@ export default function PiCameraControl({
                 <button
                   type="button"
                   className="btn btn-primary"
+                  disabled={photo.length === 0}
                   onClick={() => {
                     dataURLToBlob(photo)
                       .then((b) => {
@@ -246,13 +248,13 @@ export default function PiCameraControl({
                       })
                       .then(() => {
                         notify(
-                          "Successfully copied to clipboard!",
+                          "Successfully copied image to clipboard!",
                           NotificationType.Success,
                         );
                       })
                       .catch(() => {
                         notify(
-                          "Failed to copy to clipboard!",
+                          "Failed to copy image to clipboard!",
                           NotificationType.Error,
                         );
                       });
@@ -260,7 +262,18 @@ export default function PiCameraControl({
                 >
                   Copy
                 </button>
-                <button type="button" className="btn btn-primary">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={photo.length === 0}
+                  onClick={() => {
+                    downloadSomething(photo, "image.png");
+                    notify(
+                      "Successfully downloaded image!",
+                      NotificationType.Success,
+                    );
+                  }}
+                >
                   Download
                 </button>
                 <button
