@@ -1,4 +1,5 @@
 import React from "react";
+import scrypt from "scrypt-async";
 import PiCameraControl from "@/components/PiCameraControl";
 import PiCameraStream from "@/components/PiCameraStream";
 import getElement from "@/util/Element";
@@ -11,31 +12,32 @@ export default function PiCameraUI(): JSX.Element {
   const wsControlSendCbRef = React.useRef<(_d: string) => void>();
   const [status, setStatus] = React.useState("Disconnected.");
   let connectedWs = 0;
+  let controlConnected = false;
+  let streamConnected = false;
   const [showUI, setShowUI] = React.useState(false);
   const [disableConnectUI, setDisableConnectUI] = React.useState(false);
   const [serverURL, setServerURL] = React.useState("");
   const [serverPort, setServerPort] = React.useState<number>(NaN);
   const [serverUseSSL, setServerUseSSL] = React.useState(true);
+  const [serverPassword, setServerPassword] = React.useState("");
   const [tryConnectResponse, setTryConnectResponse] = React.useState("");
 
-  const disconnect = (dueToError: boolean = false) => {
+  const disconnect = () => {
     console.log("Disconnecting all websockets");
     wsStreamRef.current?.close();
     wsControlRef.current?.close();
     connectedWs = 0;
+    controlConnected = false;
+    streamConnected = false;
     setShowUI(false);
     setDisableConnectUI(false);
-    if (dueToError) {
-      setStatus("Disconnected or failed to connect!");
-      setTryConnectResponse("Disconnected or failed to connect!");
-    } else {
-      setStatus("Disconnected.");
-      setTryConnectResponse("Disconnected.");
-    }
+    setStatus("Disconnected.");
+    setTryConnectResponse("Disconnected.");
   };
 
   const connect = (
     url: string,
+    password: string,
     port: number = 4000,
     useSSL: boolean = true,
   ) => {
@@ -52,32 +54,66 @@ export default function PiCameraUI(): JSX.Element {
 
     const wsControl = new WebSocket(`${base}/control`);
     const wsStream = new WebSocket(`${base}/stream`);
+    let wsControlAuthed = false;
+    let wsStreamAuthed = false;
+    wsControl.binaryType = "blob";
+    wsStream.binaryType = "blob";
+
+    const scryptPassword = (salt: Blob): Promise<Blob> => {
+      const SCRYPT_N = 2 ** 14;
+      const SCRYPT_R = 8;
+      const SCRYPT_P = 1;
+      const SCRYPT_KEY_LEN = 64;
+
+      return new Promise((resolve, _) => {
+        salt.arrayBuffer().then((saltBuf) => {
+          scrypt(
+            password,
+            new Uint8Array(saltBuf),
+            {
+              N: SCRYPT_N,
+              r: SCRYPT_R,
+              p: SCRYPT_P,
+              dkLen: SCRYPT_KEY_LEN,
+              encoding: "binary",
+            },
+            (result: Uint8Array) => {
+              resolve(new Blob([result]));
+            },
+          );
+        });
+      });
+    };
+
     wsControl.addEventListener("open", () => {
       console.log("Control websocket connected!");
       wsControlRef.current = wsControl;
       wsControlSendCbRef.current = (d: string) => {
         wsControl.send(d);
       };
-      connectedWs++;
-      setStatus(`Connecting... (${connectedWs}/2)`);
-      if (connectedWs === 2) {
-        console.log("All websockets connected!");
-        setStatus("Connected!");
-        setShowUI(true);
-      }
     });
     wsStream.addEventListener("open", () => {
       console.log("Stream websocket connected!");
       wsStreamRef.current = wsStream;
-      connectedWs++;
-      setStatus(`Connecting... (${connectedWs}/2)`);
-      if (connectedWs === 2) {
-        console.log("All websockets connected!");
-        setStatus("Connected!");
-        setShowUI(true);
-      }
     });
     wsControl.addEventListener("message", (e) => {
+      if (!wsControlAuthed) {
+        scryptPassword(e.data).then((result) => {
+          wsControl.send(result);
+        });
+        wsControlAuthed = true;
+        return;
+      }
+      if (!controlConnected) {
+        connectedWs++;
+        setStatus(`Connecting... (${connectedWs}/2)`);
+        if (connectedWs === 2) {
+          console.log("All websockets connected!");
+          setStatus("Connected!");
+          setShowUI(true);
+        }
+        controlConnected = true;
+      }
       if (wsControlCbRef.current != null) {
         wsControlCbRef.current(e);
       }
@@ -88,31 +124,62 @@ export default function PiCameraUI(): JSX.Element {
       }
     });
     wsStream.addEventListener("message", (e) => {
+      if (!wsStreamAuthed) {
+        scryptPassword(e.data).then((result) => {
+          wsStream.send(result);
+        });
+        wsStreamAuthed = true;
+        return;
+      }
+      if (!streamConnected) {
+        connectedWs++;
+        setStatus(`Connecting... (${connectedWs}/2)`);
+        if (connectedWs === 2) {
+          console.log("All websockets connected!");
+          setStatus("Connected!");
+          setShowUI(true);
+        }
+        streamConnected = true;
+      }
       if (wsStreamCbRef.current != null) {
         wsStreamCbRef.current(e);
       }
     });
-    const wsControlCloseCb = () => {
+    const wsControlCloseCb = (e: CloseEvent) => {
       console.log("Control websocket closed");
       disconnect();
+      if (e.reason.length > 0) {
+        console.warn(`Disconnect reason: ${e.reason}`);
+        setStatus(e.reason);
+        setTryConnectResponse(e.reason);
+      }
     };
     wsControl.addEventListener("close", wsControlCloseCb);
-    const wsStreamCloseCb = () => {
+    const wsStreamCloseCb = (e: CloseEvent) => {
       console.log("Control websocket closed");
       disconnect();
+      if (e.reason.length > 0) {
+        console.warn(`Disconnect reason: ${e.reason}`);
+        setStatus(e.reason);
+        setTryConnectResponse(e.reason);
+      }
     };
     wsStream.addEventListener("close", wsStreamCloseCb);
     wsControl.addEventListener("error", () => {
       console.log("Control websocket closed due to error");
       wsControl.removeEventListener("close", wsControlCloseCb);
       wsStream.removeEventListener("close", wsStreamCloseCb);
-      disconnect(true);
+      disconnect();
+      setStatus("Disconnected or failed to connect!");
+      setTryConnectResponse("Disconnected or failed to connect!");
     });
     wsStream.addEventListener("error", () => {
       console.log("Control websocket closed due to error");
       wsControl.removeEventListener("close", wsControlCloseCb);
       wsStream.removeEventListener("close", wsStreamCloseCb);
-      disconnect(true);
+      disconnect();
+      setStatus("Disconnected or failed to connect!");
+      setTryConnectResponse("Disconnected or failed to connect!");
     });
   };
 
@@ -153,6 +220,10 @@ export default function PiCameraUI(): JSX.Element {
                   const url = (getElement("serverURLInput") as HTMLInputElement)
                     .value;
                   setServerURL(url);
+                  const password = (
+                    getElement("serverPasswordInput") as HTMLInputElement
+                  ).value;
+                  setServerPassword(password);
                   const port = parseInt(
                     (getElement("serverPortInput") as HTMLInputElement).value,
                   );
@@ -161,7 +232,7 @@ export default function PiCameraUI(): JSX.Element {
                   ).checked;
                   setServerPort(port);
                   setTimeout(() => {
-                    connect(url, port, useSSL);
+                    connect(url, password, port, useSSL);
                   }, 100);
                 }}
               >
@@ -176,62 +247,93 @@ export default function PiCameraUI(): JSX.Element {
                     className="form-control"
                     defaultValue={serverURL}
                     onChange={(e) => {
-                      setServerURL(e.target.value);
+                      let url = e.target.value;
+                      if (url.startsWith("https://")) {
+                        url = url.replace("https://", "");
+                      }
+                      while (url.endsWith("/")) {
+                        url = url.slice(0, url.length - 1);
+                      }
+                      e.target.value = url;
+                      setServerURL(url);
                     }}
                     disabled={disableConnectUI}
                   />
                   <div className="form-text">
                     This is the tunnel URL or the IP address of your Raspberry
-                    Pi.
+                    Pi. Input only the hostname - don{"'"}t include{" "}
+                    <code>https://</code>, trailing slash, etc. For example,{" "}
+                    <code>somerandomcharacters.ngrok.io</code>.
                   </div>
                 </div>
                 <div className="mb-2">
-                  <label htmlFor="serverPortInput" className="form-label">
-                    Server port:
+                  <label htmlFor="serverPasswordInput" className="form-label">
+                    Server password:
                   </label>
                   <input
-                    type="number"
-                    id="serverPortInput"
+                    type="text"
+                    id="serverPasswordInput"
                     className="form-control"
-                    defaultValue={serverPort}
-                    disabled={disableConnectUI}
-                    min={0}
-                    max={2 ** 16 - 1}
+                    defaultValue={serverPassword}
                     onChange={(e) => {
-                      setServerPort(parseInt(e.target.value));
+                      setServerPassword(e.target.value);
                     }}
+                    disabled={disableConnectUI}
                   />
                   <div className="form-text">
-                    This is the port the server is running on. You can leave
-                    this empty unless you are not using a tunnel, in which case
-                    it defaults to <code>4000</code> and should not be changed
-                    unless you have modified the server program to run on a
-                    different port.
+                    Password for the Picamera server. Leave blank if not set.
                   </div>
                 </div>
-                <div className="mb-2">
-                  <div className="form-check">
+                <details className="mb-2">
+                  <summary>Advanced</summary>
+                  <div className="mb-2">
+                    <label htmlFor="serverPortInput" className="form-label">
+                      Server port:
+                    </label>
                     <input
-                      className="form-check-input"
-                      type="checkbox"
-                      defaultChecked={serverUseSSL}
-                      id="serverUseSSLInput"
+                      type="number"
+                      id="serverPortInput"
+                      className="form-control"
+                      defaultValue={serverPort}
+                      disabled={disableConnectUI}
+                      min={0}
+                      max={2 ** 16 - 1}
                       onChange={(e) => {
-                        setServerUseSSL(e.target.checked);
+                        setServerPort(parseInt(e.target.value));
                       }}
                     />
-                    <label
-                      className="form-check-label"
-                      htmlFor="serverUseSSLInput"
-                    >
-                      Use SSL
-                    </label>
+                    <div className="form-text">
+                      This is the port the server is running on. You can leave
+                      this empty unless you are not using a tunnel, in which
+                      case it defaults to <code>4000</code> and should not be
+                      changed unless you have modified the server program to run
+                      on a different port.
+                    </div>
                   </div>
-                  <div className="form-text">
-                    Whether to use HTTPS or HTTP when connecting. You probably
-                    want to keep this checked.
+                  <div className="mb-2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        defaultChecked={serverUseSSL}
+                        id="serverUseSSLInput"
+                        onChange={(e) => {
+                          setServerUseSSL(e.target.checked);
+                        }}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="serverUseSSLInput"
+                      >
+                        Use SSL
+                      </label>
+                    </div>
+                    <div className="form-text">
+                      Whether to use HTTPS or HTTP when connecting. You probably
+                      want to keep this checked.
+                    </div>
                   </div>
-                </div>
+                </details>
                 <button
                   type="submit"
                   className="btn btn-primary"
