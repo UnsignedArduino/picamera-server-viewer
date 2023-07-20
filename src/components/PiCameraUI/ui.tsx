@@ -14,7 +14,8 @@ export default function PiCameraUI(): JSX.Element {
   const [showUI, setShowUI] = React.useState(false);
   const [disableConnectUI, setDisableConnectUI] = React.useState(false);
   const [serverURL, setServerURL] = React.useState("");
-  const [serverPort, setServerPort] = React.useState(4000);
+  const [serverPort, setServerPort] = React.useState<number>(NaN);
+  const [serverUseSSL, setServerUseSSL] = React.useState(true);
   const [tryConnectResponse, setTryConnectResponse] = React.useState("");
 
   const disconnect = (dueToError: boolean = false) => {
@@ -33,14 +34,24 @@ export default function PiCameraUI(): JSX.Element {
     }
   };
 
-  const connect = (url: string, port: number = 4000) => {
+  const connect = (
+    url: string,
+    port: number = 4000,
+    useSSL: boolean = true,
+  ) => {
     disconnect();
     setDisableConnectUI(true);
     setStatus("Connecting... (0/2)");
     setTryConnectResponse("");
 
-    const wsControl = new WebSocket(`ws://${url}:${port}/control`);
-    const wsStream = new WebSocket(`ws://${url}:${port}/stream`);
+    const base = `ws${useSSL ? "s" : ""}://${url}${
+      isNaN(port) ? "" : `:${port}`
+    }`;
+
+    console.log("Connecting to " + base);
+
+    const wsControl = new WebSocket(`${base}/control`);
+    const wsStream = new WebSocket(`${base}/stream`);
     wsControl.addEventListener("open", () => {
       console.log("Control websocket connected!");
       wsControlRef.current = wsControl;
@@ -145,9 +156,12 @@ export default function PiCameraUI(): JSX.Element {
                   const port = parseInt(
                     (getElement("serverPortInput") as HTMLInputElement).value,
                   );
+                  const useSSL = (
+                    getElement("serverUseSSLInput") as HTMLInputElement
+                  ).checked;
                   setServerPort(port);
                   setTimeout(() => {
-                    connect(url, port);
+                    connect(url, port, useSSL);
                   }, 100);
                 }}
               >
@@ -167,7 +181,8 @@ export default function PiCameraUI(): JSX.Element {
                     disabled={disableConnectUI}
                   />
                   <div className="form-text">
-                    This is the IP address of your Raspberry Pi.
+                    This is the tunnel URL or the IP address of your Raspberry
+                    Pi.
                   </div>
                 </div>
                 <div className="mb-2">
@@ -190,6 +205,29 @@ export default function PiCameraUI(): JSX.Element {
                     This is the port the server is running on. Defaults to{" "}
                     <code>4000</code> and should not be changed unless you have
                     modified the server program to run on a different port.
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      defaultChecked={serverUseSSL}
+                      id="serverUseSSLInput"
+                      onChange={(e) => {
+                        setServerUseSSL(e.target.checked);
+                      }}
+                    />
+                    <label
+                      className="form-check-label"
+                      htmlFor="serverUseSSLInput"
+                    >
+                      Use SSL
+                    </label>
+                  </div>
+                  <div className="form-text">
+                    Whether to use HTTPS or HTTP when connecting. You probably
+                    want to keep this checked.
                   </div>
                 </div>
                 <button
