@@ -202,9 +202,11 @@ export default function PiCameraUI(): JSX.Element {
                     }}
                   />
                   <div className="form-text">
-                    This is the port the server is running on. Defaults to{" "}
-                    <code>4000</code> and should not be changed unless you have
-                    modified the server program to run on a different port.
+                    This is the port the server is running on. You can leave
+                    this empty unless you are not using a tunnel, in which case
+                    it defaults to <code>4000</code> and should not be changed
+                    unless you have modified the server program to run on a
+                    different port.
                   </div>
                 </div>
                 <div className="mb-2">
