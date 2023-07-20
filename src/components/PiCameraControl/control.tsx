@@ -1,7 +1,7 @@
 import React from "react";
 import { NotificationType, notify } from "@/components/Notifications";
 import { dataURLToBlob } from "@/util/Blob";
-import { copyImageBlobToClipboard } from "@/util/Clipboard";
+import { copyPNGBlobToClipboard } from "@/util/Clipboard";
 import getElement from "@/util/Element";
 
 function PiCameraSettingSelector({
@@ -154,7 +154,7 @@ export default function PiCameraControl({
       } else if (msg.type === "photo_request_result") {
         console.log("Received photo request result");
         setEnableControl(true);
-        setPhoto(`data:image/jpg;base64,${msg.photo_request_result}`);
+        setPhoto(`data:image/png;base64,${msg.photo_request_result}`);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -242,7 +242,7 @@ export default function PiCameraControl({
                   onClick={() => {
                     dataURLToBlob(photo)
                       .then((b) => {
-                        return copyImageBlobToClipboard(b);
+                        return copyPNGBlobToClipboard(b);
                       })
                       .then(() => {
                         notify(

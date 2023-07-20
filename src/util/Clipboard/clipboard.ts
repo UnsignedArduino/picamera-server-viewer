@@ -70,23 +70,24 @@ export function readTextFromClipboard(): Promise<string> {
 }
 
 // https://stackoverflow.com/a/59162806/10291933
-export function copyImageBlobToClipboard(
-  imgBlob: Blob,
-  type: string = "jpg",
+export function copyPNGBlobToClipboard(
+  imgBlob: Blob
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!navigator.clipboard) {
+      console.error("Clipboard API not present!")
       reject();
     }
-    const items: { [mime: string]: Blob } = {};
-    items[`image/${type}`] = imgBlob;
     try {
       navigator.clipboard
-        .write([new ClipboardItem(items)])
+        .write([new ClipboardItem({"image/png": imgBlob})])
         .then(() => {
+          console.log("Successfully copied to clipboard!")
           resolve();
         })
-        .catch(() => {
+        .catch((reason) => {
+          console.error("Failed to write clipboard item!")
+          console.error(reason)
           reject();
         });
     } catch (err) {
