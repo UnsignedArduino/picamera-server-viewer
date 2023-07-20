@@ -271,8 +271,9 @@ export default function PiCameraUI(): JSX.Element {
                     Server password:
                   </label>
                   <input
-                    type="text"
+                    type="password"
                     id="serverPasswordInput"
+                    autoComplete="current-password"
                     className="form-control"
                     defaultValue={serverPassword}
                     onChange={(e) => {
