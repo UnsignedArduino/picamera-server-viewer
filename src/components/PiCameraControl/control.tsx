@@ -173,6 +173,7 @@ export default function PiCameraControl({
       style={{ maxHeight: "95vh", overflowY: "scroll" }}
       hidden={hide}
     >
+      <h2>PiCamera Server Viewer</h2>
       <h3>Control</h3>
       <div>
         <button

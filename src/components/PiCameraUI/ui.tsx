@@ -1,7 +1,9 @@
 import React from "react";
 import scrypt from "scrypt-async";
+import NewTabLink from "@/components/NewTabLink";
 import PiCameraControl from "@/components/PiCameraControl";
 import PiCameraStream from "@/components/PiCameraStream";
+import WhatsThisButtonAndModal from "@/components/WhatsThis";
 import getElement from "@/util/Element";
 
 export default function PiCameraUI(): JSX.Element {
@@ -207,152 +209,172 @@ export default function PiCameraUI(): JSX.Element {
             <PiCameraStream wsOnMsgEventCbRef={wsStreamCbRef} hide={!showUI} />
           </div>
           <div className="col d-block">
+            {!showUI ? (
+              <div
+                className="px-1"
+                style={{ maxHeight: "95vh", overflowY: "auto" }}
+              >
+                <h2>PiCamera Server Viewer</h2>
+                <WhatsThisButtonAndModal />
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setDisableConnectUI(true);
+                    const url = (
+                      getElement("serverURLInput") as HTMLInputElement
+                    ).value;
+                    setServerURL(url);
+                    const password = (
+                      getElement("serverPasswordInput") as HTMLInputElement
+                    ).value;
+                    setServerPassword(password);
+                    const port = parseInt(
+                      (getElement("serverPortInput") as HTMLInputElement).value,
+                    );
+                    const useSSL = (
+                      getElement("serverUseSSLInput") as HTMLInputElement
+                    ).checked;
+                    setServerPort(port);
+                    setTimeout(() => {
+                      connect(url, password, port, useSSL);
+                    }, 100);
+                  }}
+                >
+                  <h3>Connect</h3>
+                  <div className="mb-2">
+                    <label htmlFor="serverURLInput" className="form-label">
+                      Server URL:
+                    </label>
+                    <input
+                      type="text"
+                      id="serverURLInput"
+                      className="form-control"
+                      defaultValue={serverURL}
+                      onChange={(e) => {
+                        let url = e.target.value;
+                        if (url.startsWith("https://")) {
+                          url = url.replace("https://", "");
+                        }
+                        while (url.endsWith("/")) {
+                          url = url.slice(0, url.length - 1);
+                        }
+                        e.target.value = url;
+                        setServerURL(url);
+                      }}
+                      disabled={disableConnectUI}
+                    />
+                    <div className="form-text">
+                      This is the tunnel URL or the IP address of your Raspberry
+                      Pi. Input only the hostname - don{"'"}t include{" "}
+                      <code>https://</code>, trailing slash, etc. For example,{" "}
+                      <code>somerandomcharacters.ngrok.io</code>.
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <label htmlFor="serverPasswordInput" className="form-label">
+                      Server password:
+                    </label>
+                    <input
+                      type="password"
+                      id="serverPasswordInput"
+                      autoComplete="current-password"
+                      className="form-control"
+                      defaultValue={serverPassword}
+                      onChange={(e) => {
+                        setServerPassword(e.target.value);
+                      }}
+                      disabled={disableConnectUI}
+                    />
+                    <div className="form-text">
+                      Password for the Picamera server. Leave blank if not set.
+                    </div>
+                  </div>
+                  <details className="mb-2">
+                    <summary>Advanced</summary>
+                    <div className="mb-2">
+                      <label htmlFor="serverPortInput" className="form-label">
+                        Server port:
+                      </label>
+                      <input
+                        type="number"
+                        id="serverPortInput"
+                        className="form-control"
+                        defaultValue={serverPort}
+                        disabled={disableConnectUI}
+                        min={0}
+                        max={2 ** 16 - 1}
+                        onChange={(e) => {
+                          setServerPort(parseInt(e.target.value));
+                        }}
+                      />
+                      <div className="form-text">
+                        This is the port the server is running on. You can leave
+                        this empty unless you are not using a tunnel, in which
+                        case it defaults to <code>4000</code> and should not be
+                        changed unless you have modified the server program to
+                        run on a different port.
+                      </div>
+                    </div>
+                    <div className="mb-2">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          defaultChecked={serverUseSSL}
+                          id="serverUseSSLInput"
+                          onChange={(e) => {
+                            setServerUseSSL(e.target.checked);
+                          }}
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor="serverUseSSLInput"
+                        >
+                          Use SSL
+                        </label>
+                      </div>
+                      <div className="form-text">
+                        Whether to use HTTPS or HTTP when connecting. You
+                        probably want to keep this checked.
+                      </div>
+                    </div>
+                  </details>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={disableConnectUI || serverURL.length === 0}
+                  >
+                    Connect
+                  </button>
+                  {tryConnectResponse.length > 0 ? (
+                    <div className="alert alert-danger mt-3" role="alert">
+                      {tryConnectResponse}
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                  <div className="alert alert-primary mt-3" role="alert">
+                    If you like this project, please consider ⭐ starring ⭐ or
+                    contributing to the GitHub repositories for the{" "}
+                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server-viewer">
+                      server software
+                    </NewTabLink>{" "}
+                    and{" "}
+                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server">
+                      web page viewer
+                    </NewTabLink>{" "}
+                    sources!
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <></>
+            )}
             <PiCameraControl
               wsOnMsgEventCbRef={wsControlCbRef}
               wsSendRef={wsControlSendCbRef}
               hide={!showUI}
             />
-            {!showUI ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setDisableConnectUI(true);
-                  const url = (getElement("serverURLInput") as HTMLInputElement)
-                    .value;
-                  setServerURL(url);
-                  const password = (
-                    getElement("serverPasswordInput") as HTMLInputElement
-                  ).value;
-                  setServerPassword(password);
-                  const port = parseInt(
-                    (getElement("serverPortInput") as HTMLInputElement).value,
-                  );
-                  const useSSL = (
-                    getElement("serverUseSSLInput") as HTMLInputElement
-                  ).checked;
-                  setServerPort(port);
-                  setTimeout(() => {
-                    connect(url, password, port, useSSL);
-                  }, 100);
-                }}
-              >
-                <h3>Connect</h3>
-                <div className="mb-2">
-                  <label htmlFor="serverURLInput" className="form-label">
-                    Server URL:
-                  </label>
-                  <input
-                    type="text"
-                    id="serverURLInput"
-                    className="form-control"
-                    defaultValue={serverURL}
-                    onChange={(e) => {
-                      let url = e.target.value;
-                      if (url.startsWith("https://")) {
-                        url = url.replace("https://", "");
-                      }
-                      while (url.endsWith("/")) {
-                        url = url.slice(0, url.length - 1);
-                      }
-                      e.target.value = url;
-                      setServerURL(url);
-                    }}
-                    disabled={disableConnectUI}
-                  />
-                  <div className="form-text">
-                    This is the tunnel URL or the IP address of your Raspberry
-                    Pi. Input only the hostname - don{"'"}t include{" "}
-                    <code>https://</code>, trailing slash, etc. For example,{" "}
-                    <code>somerandomcharacters.ngrok.io</code>.
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <label htmlFor="serverPasswordInput" className="form-label">
-                    Server password:
-                  </label>
-                  <input
-                    type="password"
-                    id="serverPasswordInput"
-                    autoComplete="current-password"
-                    className="form-control"
-                    defaultValue={serverPassword}
-                    onChange={(e) => {
-                      setServerPassword(e.target.value);
-                    }}
-                    disabled={disableConnectUI}
-                  />
-                  <div className="form-text">
-                    Password for the Picamera server. Leave blank if not set.
-                  </div>
-                </div>
-                <details className="mb-2">
-                  <summary>Advanced</summary>
-                  <div className="mb-2">
-                    <label htmlFor="serverPortInput" className="form-label">
-                      Server port:
-                    </label>
-                    <input
-                      type="number"
-                      id="serverPortInput"
-                      className="form-control"
-                      defaultValue={serverPort}
-                      disabled={disableConnectUI}
-                      min={0}
-                      max={2 ** 16 - 1}
-                      onChange={(e) => {
-                        setServerPort(parseInt(e.target.value));
-                      }}
-                    />
-                    <div className="form-text">
-                      This is the port the server is running on. You can leave
-                      this empty unless you are not using a tunnel, in which
-                      case it defaults to <code>4000</code> and should not be
-                      changed unless you have modified the server program to run
-                      on a different port.
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        defaultChecked={serverUseSSL}
-                        id="serverUseSSLInput"
-                        onChange={(e) => {
-                          setServerUseSSL(e.target.checked);
-                        }}
-                      />
-                      <label
-                        className="form-check-label"
-                        htmlFor="serverUseSSLInput"
-                      >
-                        Use SSL
-                      </label>
-                    </div>
-                    <div className="form-text">
-                      Whether to use HTTPS or HTTP when connecting. You probably
-                      want to keep this checked.
-                    </div>
-                  </div>
-                </details>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={disableConnectUI || serverURL.length === 0}
-                >
-                  Connect
-                </button>
-                {tryConnectResponse.length > 0 ? (
-                  <div className="alert alert-danger mt-3" role="alert">
-                    {tryConnectResponse}
-                  </div>
-                ) : (
-                  <></>
-                )}
-              </form>
-            ) : (
-              <></>
-            )}
           </div>
         </div>
       </div>
