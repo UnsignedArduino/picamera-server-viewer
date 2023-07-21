@@ -126,12 +126,14 @@ function PiCameraSettingsNumberSlider({
 export default function PiCameraControl({
   wsOnMsgEventCbRef,
   wsSendRef,
+  disconnectCb,
   hide = false,
 }: {
   wsOnMsgEventCbRef: React.MutableRefObject<
     ((_e: MessageEvent) => void) | undefined
   >;
   wsSendRef: React.MutableRefObject<((_d: string) => void) | undefined>;
+  disconnectCb: () => void;
   hide: boolean;
 }): JSX.Element {
   const [enableControl, setEnableControl] = React.useState(true);
@@ -174,6 +176,9 @@ export default function PiCameraControl({
       hidden={hide}
     >
       <h2>PiCamera Server Viewer</h2>
+      <button type="button" className="btn btn-danger" onClick={disconnectCb}>
+        Disconnect
+      </button>
       <h3>Control</h3>
       <div>
         <button

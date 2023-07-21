@@ -412,6 +412,7 @@ export default function PiCameraUI(): JSX.Element {
             <PiCameraControl
               wsOnMsgEventCbRef={wsControlCbRef}
               wsSendRef={wsControlSendCbRef}
+              disconnectCb={disconnect}
               hide={!showUI}
             />
           </div>
