@@ -99,11 +99,65 @@ function PiCameraSettingsNumberSlider({
   disabled: boolean;
   onChange: () => void;
 }): JSX.Element {
+  const [canEditNum, setCanEditNum] = React.useState(false);
+
   return (
     <div className="mb-2">
-      <label className="form-label" htmlFor={title}>
-        {title.replaceAll("_", " ")}: {setting.value}{" "}
-      </label>
+      {canEditNum ? (
+        <div className="row g-2">
+          <label
+            className="col-auto col-form-label"
+            htmlFor={title}
+            onClick={() => {
+              setCanEditNum(false);
+              const newValue = (
+                getElement(`${title}-numeric-input`) as HTMLInputElement
+              ).value;
+              if ((getElement(title) as HTMLInputElement).value !== newValue) {
+                (getElement(title) as HTMLInputElement).value = newValue;
+                onChange();
+              }
+            }}
+          >
+            {title.replaceAll("_", " ")}:
+          </label>
+          <div className="col-auto">
+            <input
+              type="number"
+              className="form-control form-control-sm"
+              defaultValue={setting.value}
+              min={setting.min}
+              max={setting.max}
+              id={`${title}-numeric-input`}
+              onBlur={(e) => {
+                setCanEditNum(false);
+                const newValue = e.target.value;
+                if (
+                  (getElement(title) as HTMLInputElement).value !== newValue
+                ) {
+                  (getElement(title) as HTMLInputElement).value = newValue;
+                  onChange();
+                }
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <label
+          className="form-label"
+          htmlFor={title}
+          onClick={() => {
+            setCanEditNum(true);
+            setTimeout(() => {
+              (
+                getElement(`${title}-numeric-input`) as HTMLInputElement
+              ).focus();
+            });
+          }}
+        >
+          {title.replaceAll("_", " ")}: {setting.value}{" "}
+        </label>
+      )}
       <input
         className="form-range"
         type="range"
