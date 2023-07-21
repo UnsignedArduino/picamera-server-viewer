@@ -4,6 +4,7 @@ import NewTabLink from "@/components/NewTabLink";
 import PiCameraControl from "@/components/PiCameraControl";
 import PiCameraStream from "@/components/PiCameraStream";
 import WhatsThisButtonAndModal from "@/components/WhatsThis";
+import { getCookie, setCookie } from "@/util/Cookies";
 import getElement from "@/util/Element";
 
 export default function PiCameraUI(): JSX.Element {
@@ -23,6 +24,44 @@ export default function PiCameraUI(): JSX.Element {
   const [serverUseSSL, setServerUseSSL] = React.useState(true);
   const [serverPassword, setServerPassword] = React.useState("");
   const [tryConnectResponse, setTryConnectResponse] = React.useState("");
+
+  React.useEffect(() => {
+    const LAST_CONN_DETAILS_COOKIE_LIFE = 60 * 60 * 24 * 400;
+    if (serverURL.length > 0 && !isNaN(serverPort)) {
+      setCookie("serverURL", serverURL, LAST_CONN_DETAILS_COOKIE_LIFE);
+      setCookie(
+        "serverPort",
+        serverPort.toString(),
+        LAST_CONN_DETAILS_COOKIE_LIFE,
+      );
+      setCookie(
+        "serverUseSSL",
+        serverUseSSL ? "1" : "0",
+        LAST_CONN_DETAILS_COOKIE_LIFE,
+      );
+    }
+  }, [serverPort, serverURL, serverUseSSL]);
+
+  React.useEffect(() => {
+    const url = getCookie("serverURL");
+    if (url !== null) {
+      console.log(`Restoring last URL: ${url}`);
+      setServerURL(url);
+    }
+    const port = getCookie("serverPort");
+    if (port !== null) {
+      console.log(`Restoring last port: ${parseInt(port)}`);
+      setServerPort(parseInt(port));
+      (getElement("serverPortInput") as HTMLInputElement).value = port;
+    }
+    const useSSL = getCookie("serverUseSSL");
+    if (useSSL !== null) {
+      console.log(`Restoring last use SSL: ${useSSL === "1"}`);
+      setServerUseSSL(useSSL === "1");
+      (getElement("serverUseSSLInput") as HTMLInputElement).checked =
+        useSSL === "1";
+    }
+  }, []);
 
   const disconnect = () => {
     console.log("Disconnecting all websockets");
