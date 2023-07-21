@@ -140,6 +140,9 @@ export default function PiCameraControl({
   const [settings, setSettings] = React.useState<object>({});
   const [directions, setDirections] = React.useState<object>({});
   const [photo, setPhoto] = React.useState("");
+  const [performance, setPerformance] = React.useState<{
+    [stat: string]: number;
+  }>({});
 
   React.useEffect(() => {
     wsOnMsgEventCbRef.current = (e: MessageEvent) => {
@@ -158,6 +161,8 @@ export default function PiCameraControl({
         console.log("Received photo request result");
         setEnableControl(true);
         setPhoto(`data:image/png;base64,${msg.photo_request_result}`);
+      } else if (msg.type === "performance") {
+        setPerformance(msg.performance);
       }
     };
   }, [wsOnMsgEventCbRef]);
@@ -167,6 +172,7 @@ export default function PiCameraControl({
     div.addEventListener("hidden.bs.modal", () => {
       setPhoto("");
     });
+    setPerformance({});
   }, []);
 
   return (
@@ -176,7 +182,22 @@ export default function PiCameraControl({
       hidden={hide}
     >
       <h2>PiCamera Server Viewer</h2>
-      <button type="button" className="btn btn-danger" onClick={disconnectCb}>
+      <p>
+        {Object.keys(performance).map((key) => {
+          const value = performance[key];
+          return (
+            <>
+              {key.replaceAll("_", " ")}: {value}
+              <br />
+            </>
+          );
+        })}
+      </p>
+      <button
+        type="button"
+        className="btn btn-danger mb-2"
+        onClick={disconnectCb}
+      >
         Disconnect
       </button>
       <h3>Control</h3>
