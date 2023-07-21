@@ -395,11 +395,11 @@ export default function PiCameraUI(): JSX.Element {
                   <div className="alert alert-primary mt-3" role="alert">
                     If you like this project, please consider ⭐ starring ⭐ or
                     contributing to the GitHub repositories for the{" "}
-                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server-viewer">
+                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server">
                       server software
                     </NewTabLink>{" "}
                     and{" "}
-                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server">
+                    <NewTabLink href="https://github.com/UnsignedArduino/picamera-server-viewer">
                       web page viewer
                     </NewTabLink>{" "}
                     sources!

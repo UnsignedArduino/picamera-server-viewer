@@ -54,11 +54,11 @@ export default function WhatsThisButtonAndModal(): JSX.Element {
               <p>
                 Issues? Post an issue in the respective GitHub repositories for
                 either the{" "}
-                <NewTabLink href="https://github.com/UnsignedArduino/picamera-server-viewer">
+                <NewTabLink href="https://github.com/UnsignedArduino/picamera-server">
                   server software
                 </NewTabLink>{" "}
                 or{" "}
-                <NewTabLink href="https://github.com/UnsignedArduino/picamera-server">
+                <NewTabLink href="https://github.com/UnsignedArduino/picamera-server-viewer">
                   web page viewer
                 </NewTabLink>
                 !
